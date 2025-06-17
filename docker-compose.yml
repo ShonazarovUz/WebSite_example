@@ -1,0 +1,46 @@
+services:
+  nginx:
+    container_name: nginx
+    image: nginx:alpine  # Nginxning yengil versiyasidan foydalaniladi
+    ports:
+      - "8000:80"  # 8000-port orqali Laravelga kirish
+    volumes:
+      - ./:/var/www  # Laravel loyihasi katalogini ulash
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf  # Maxsus Nginx konfiguratsiyasi
+    depends_on:
+      - app  # Nginx ishga tushishidan oldin PHP-FPMni kutadi
+    networks:
+      - laravel-network  # Maxsus tarmoqdan foydalanish
+
+  app:
+    container_name: app
+    build: .  # PHP-FPM uchun Dockerfiledan quriladi
+    depends_on:
+      - db  # Ma'lumotlar bazasi xizmatini kutadi
+    volumes:
+      - ./:/var/www  # Laravel ilovasi katalogini ulash
+    networks:
+      - laravel-network  # Maxsus tarmoqdan foydalanish
+
+  db:
+    container_name: mysql
+    image: mysql:8.0  # MySQL 8.0 versiyasi ishlatilmoqda
+    restart: always
+    ports:
+      - "3307:3306"  # MySQL xizmatini 3306-port orqali ulash
+    environment:
+      MYSQL_DATABASE: web_app  # Laravel loyihasi uchun ma'lumotlar bazasi
+      MYSQL_ROOT_PASSWORD: root  # MySQL root paroli
+    volumes:
+      - web_app:/var/lib/mysql  # MySQL ma'lumotlarini saqlash
+    networks:
+      - laravel-network  # Maxsus tarmoqdan foydalanish
+
+# Docker konteynerlar uchun maxsus tarmoq
+networks:
+  laravel-network:
+    driver: bridge
+
+# MySQL ma'lumotlar saqlash hajmi
+volumes:
+  web_app:
